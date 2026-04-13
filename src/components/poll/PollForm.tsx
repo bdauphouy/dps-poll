@@ -86,6 +86,23 @@ export function PollForm({ poll }: PollFormProps) {
     trackPageView(poll.id);
   }, [poll.id]);
 
+  // Set dynamic favicon from poll logo
+  useEffect(() => {
+    if (poll.logoUrl) {
+      const existingFavicon = document.querySelector(
+        'link[rel="icon"]',
+      ) as HTMLLinkElement;
+      if (existingFavicon) {
+        existingFavicon.href = poll.logoUrl;
+      } else {
+        const link = document.createElement("link");
+        link.rel = "icon";
+        link.href = poll.logoUrl;
+        document.head.appendChild(link);
+      }
+    }
+  }, [poll.logoUrl]);
+
   // Trigger confetti on successful submission
   useEffect(() => {
     if (isSubmitted) {

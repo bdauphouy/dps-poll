@@ -1,9 +1,64 @@
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
+import { headers } from "next/headers";
 import { getPoll } from "@/lib/actions/polls";
 import { PollForm } from "@/components/poll/PollForm";
 
 interface PollPageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: PollPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const poll = await getPoll(id);
+
+  if (!poll) {
+    return {};
+  }
+
+  // Get base URL from headers or environment
+  const headersList = await headers();
+  const host = headersList.get("host") || "localhost:3000";
+  const protocol = host.includes("localhost") ? "http" : "https";
+  const baseUrl = `${protocol}://${host}`;
+
+  const ogImageUrl = poll.logoUrl
+    ? `${baseUrl}/api/polls/${id}/og-image`
+    : undefined;
+
+  return {
+    title: poll.title,
+    description: poll.description || undefined,
+    icons: poll.logoUrl
+      ? {
+          icon: poll.logoUrl,
+        }
+      : undefined,
+    openGraph: ogImageUrl
+      ? {
+          title: poll.title,
+          description: poll.description || undefined,
+          images: [
+            {
+              url: ogImageUrl,
+              width: 512,
+              height: 512,
+              alt: poll.title,
+            },
+          ],
+        }
+      : undefined,
+    twitter: ogImageUrl
+      ? {
+          card: "summary",
+          title: poll.title,
+          description: poll.description || undefined,
+          images: [ogImageUrl],
+        }
+      : undefined,
+  };
 }
 
 export default async function PollPage({ params }: PollPageProps) {
