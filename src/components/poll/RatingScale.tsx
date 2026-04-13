@@ -8,6 +8,7 @@ interface RatingScaleProps {
   value: number;
   onChange: (value: number) => void;
   required?: boolean;
+  isEnglish?: boolean;
 }
 
 export function RatingScale({
@@ -15,6 +16,7 @@ export function RatingScale({
   question,
   value,
   onChange,
+  isEnglish = false,
 }: RatingScaleProps) {
   const [hovered, setHovered] = useState<number | null>(null);
 
@@ -50,8 +52,8 @@ export function RatingScale({
         </div>
 
         <div className="flex justify-between text-xs text-muted-foreground mt-3 px-1 max-w-[280px] mx-auto">
-          <span>Not satisfied</span>
-          <span>Very satisfied</span>
+          <span>{isEnglish ? "Not satisfied" : "No satisfecho"}</span>
+          <span>{isEnglish ? "Very satisfied" : "Muy satisfecho"}</span>
         </div>
       </div>
 

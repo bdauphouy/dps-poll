@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { headers } from "next/headers";
+import { Suspense } from "react";
 import { getPoll } from "@/lib/actions/polls";
 import { PollForm } from "@/components/poll/PollForm";
 
@@ -101,5 +102,9 @@ export default async function PollPage({ params }: PollPageProps) {
     );
   }
 
-  return <PollForm poll={poll} />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <PollForm poll={poll} />
+    </Suspense>
+  );
 }

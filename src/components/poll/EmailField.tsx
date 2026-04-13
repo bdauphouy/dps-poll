@@ -6,9 +6,16 @@ interface EmailFieldProps {
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
+  isEnglish?: boolean;
 }
 
-export function EmailField({ id, question, value, onChange }: EmailFieldProps) {
+export function EmailField({
+  id,
+  question,
+  value,
+  onChange,
+  isEnglish = false,
+}: EmailFieldProps) {
   return (
     <div className="space-y-4">
       <h2 className="text-lg sm:text-xl font-semibold leading-snug">{question}</h2>
@@ -18,7 +25,7 @@ export function EmailField({ id, question, value, onChange }: EmailFieldProps) {
         name={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="your@email.com"
+        placeholder={isEnglish ? "your@email.com" : "tu@correo.com"}
         className="w-full h-14 px-4 bg-secondary rounded-xl text-[15px] outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary"
       />
     </div>

@@ -289,6 +289,7 @@ export function PollForm({ poll }: PollFormProps) {
             value={(answer as string) || ""}
             onChange={(v) => setCurrentAnswer(v)}
             required={question.required}
+            isEnglish={isEnglish}
           />
         );
       case "rating":
@@ -299,6 +300,7 @@ export function PollForm({ poll }: PollFormProps) {
             value={(answer as number) || 0}
             onChange={(v) => setCurrentAnswer(v)}
             required={question.required}
+            isEnglish={isEnglish}
           />
         );
       case "text":
@@ -309,6 +311,7 @@ export function PollForm({ poll }: PollFormProps) {
             value={(answer as string) || ""}
             onChange={(v) => setCurrentAnswer(v)}
             required={question.required}
+            isEnglish={isEnglish}
           />
         );
       case "multiple_choice":
