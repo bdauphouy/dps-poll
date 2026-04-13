@@ -7,17 +7,25 @@ import { PollForm } from "@/components/poll/PollForm";
 
 interface PollPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ lang?: string }>;
 }
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: PollPageProps): Promise<Metadata> {
   const { id } = await params;
+  const { lang } = await searchParams;
+  const isEnglish = lang === "en";
   const poll = await getPoll(id);
 
   if (!poll) {
     return {};
   }
+
+  // Get localized title and description
+  const title = isEnglish && poll.titleEn ? poll.titleEn : poll.title;
+  const description = isEnglish && poll.descriptionEn ? poll.descriptionEn : poll.description;
 
   // Get base URL from headers or environment
   const headersList = await headers();
@@ -30,8 +38,8 @@ export async function generateMetadata({
     : undefined;
 
   return {
-    title: poll.title,
-    description: poll.description || undefined,
+    title,
+    description: description || undefined,
     icons: poll.logoUrl
       ? {
           icon: poll.logoUrl,
@@ -39,14 +47,14 @@ export async function generateMetadata({
       : undefined,
     openGraph: ogImageUrl
       ? {
-          title: poll.title,
-          description: poll.description || undefined,
+          title,
+          description: description || undefined,
           images: [
             {
               url: ogImageUrl,
-              width: 512,
-              height: 512,
-              alt: poll.title,
+              width: 200,
+              height: 200,
+              alt: title,
             },
           ],
         }
@@ -54,8 +62,8 @@ export async function generateMetadata({
     twitter: ogImageUrl
       ? {
           card: "summary",
-          title: poll.title,
-          description: poll.description || undefined,
+          title,
+          description: description || undefined,
           images: [ogImageUrl],
         }
       : undefined,
