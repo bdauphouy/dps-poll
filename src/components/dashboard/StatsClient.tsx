@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { CustomPollStats, QuestionType } from "@/types/poll";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 function QuestionStatsCard({
   question,
@@ -18,7 +19,7 @@ function QuestionStatsCard({
 
   if (type === "rating") {
     const sortedResponses = [...responses].sort(
-      (a, b) => Number(a.value) - Number(b.value)
+      (a, b) => Number(a.value) - Number(b.value),
     );
     const average =
       totalResponses > 0
@@ -36,7 +37,7 @@ function QuestionStatsCard({
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((rating) => {
             const response = sortedResponses.find(
-              (r) => Number(r.value) === rating
+              (r) => Number(r.value) === rating,
             );
             const count = response?.count || 0;
             const percentage =
@@ -135,6 +136,7 @@ interface StatsClientProps {
 
 export function StatsClient({ stats }: StatsClientProps) {
   const router = useRouter();
+  const [isResetting, setIsResetting] = useState(false);
 
   const statusConfig = {
     draft: {
@@ -158,6 +160,38 @@ export function StatsClient({ stats }: StatsClientProps) {
 
   const handleRefresh = () => {
     router.refresh();
+  };
+
+  const handleResetResponses = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to reset all responses? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const response = await fetch(
+        `/api/polls/${stats.poll.id}/reset-responses`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to reset responses");
+      }
+
+      // Refresh the page to show updated stats
+      router.refresh();
+    } catch (error) {
+      console.error("Error resetting responses:", error);
+      alert("Failed to reset responses. Please try again.");
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -203,25 +237,35 @@ export function StatsClient({ stats }: StatsClientProps) {
                 )}
               </div>
             </div>
-            <button
-              onClick={handleRefresh}
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary hover:bg-secondary/80 transition-colors cursor-pointer shrink-0"
-              title="Refresh"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefresh}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary hover:bg-secondary/80 transition-colors cursor-pointer shrink-0"
+                title="Refresh"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            </button>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </button>
+              <button
+                onClick={handleResetResponses}
+                disabled={isResetting}
+                className="px-4 py-2 text-sm font-medium bg-destructive text-white rounded-xl hover:bg-destructive/90 disabled:opacity-50 transition-colors cursor-pointer shrink-0"
+                title="Reset all responses"
+              >
+                {isResetting ? "Resetting..." : "Reset"}
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -319,7 +363,9 @@ export function StatsClient({ stats }: StatsClientProps) {
                       className="p-4 border-b border-border/50 last:border-b-0"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">#{index + 1}</span>
+                        <span className="text-sm font-medium">
+                          #{index + 1}
+                        </span>
                         <span className="text-xs text-muted-foreground">
                           {new Date(response.createdAt).toLocaleDateString()}
                         </span>

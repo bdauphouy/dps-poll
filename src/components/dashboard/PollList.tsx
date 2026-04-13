@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { CustomPoll, PollStatus } from "@/types/poll";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 interface PollListProps {
   polls: CustomPoll[];
@@ -16,9 +17,21 @@ const statusConfig: Record<
   PollStatus,
   { label: string; color: string; bgColor: string }
 > = {
-  draft: { label: "Draft", color: "text-muted-foreground", bgColor: "bg-secondary" },
-  active: { label: "Active", color: "text-[#30D158]", bgColor: "bg-[#30D158]/10" },
-  ended: { label: "Ended", color: "text-destructive", bgColor: "bg-destructive/10" },
+  draft: {
+    label: "Draft",
+    color: "text-muted-foreground",
+    bgColor: "bg-secondary",
+  },
+  active: {
+    label: "Active",
+    color: "text-[#30D158]",
+    bgColor: "bg-[#30D158]/10",
+  },
+  ended: {
+    label: "Ended",
+    color: "text-destructive",
+    bgColor: "bg-destructive/10",
+  },
 };
 
 function PollCard({
@@ -37,11 +50,31 @@ function PollCard({
   isStatusChanging?: boolean;
 }) {
   const router = useRouter();
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const copyLink = (e: React.MouseEvent, pollId: string) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowLanguageMenu(false);
+      }
+    };
+
+    if (showLanguageMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showLanguageMenu]);
+
+  const copyLink = (e: React.MouseEvent, pollId: string, lang?: string) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/poll/${pollId}`;
+    let url = `${window.location.origin}/poll/${pollId}`;
+    if (lang) {
+      url += `?lang=${lang}`;
+    }
     navigator.clipboard.writeText(url);
+    setShowLanguageMenu(false);
   };
 
   const handleCardClick = () => {
@@ -69,7 +102,9 @@ function PollCard({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-[15px] truncate">{poll.title}</h3>
+              <h3 className="font-semibold text-[15px] truncate">
+                {poll.title}
+              </h3>
               <span
                 className={`px-2 py-0.5 rounded-full text-xs font-medium ${config.color} ${config.bgColor}`}
               >
@@ -91,7 +126,10 @@ function PollCard({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/50 flex-wrap" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center gap-2 mt-4 pt-4 border-t border-border/50 flex-wrap"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Status actions */}
           {poll.status === "draft" && (
             <button
@@ -100,9 +138,24 @@ function PollCard({
               className="px-3 py-1.5 text-sm font-medium text-[#30D158] bg-[#30D158]/10 rounded-lg cursor-pointer hover:bg-[#30D158]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
               {isStatusChanging ? (
-                <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
               ) : null}
               Activate
@@ -115,9 +168,24 @@ function PollCard({
               className="px-3 py-1.5 text-sm font-medium text-destructive bg-destructive/10 rounded-lg cursor-pointer hover:bg-destructive/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
               {isStatusChanging ? (
-                <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
               ) : null}
               End
@@ -130,9 +198,24 @@ function PollCard({
               className="px-3 py-1.5 text-sm font-medium text-[#30D158] bg-[#30D158]/10 rounded-lg cursor-pointer hover:bg-[#30D158]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
               {isStatusChanging ? (
-                <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
               ) : null}
               Reactivate
@@ -141,25 +224,79 @@ function PollCard({
 
           <div className="flex-1" />
 
-          <button
-            onClick={(e) => copyLink(e, poll.id)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg bg-secondary hover:bg-secondary/80 transition-colors cursor-pointer"
-            title="Copy link"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowLanguageMenu(!showLanguageMenu);
+              }}
+              className="w-9 h-9 flex items-center justify-center rounded-lg bg-secondary hover:bg-secondary/80 transition-colors cursor-pointer"
+              title="Copy link"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
-          </button>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+            </button>
+
+            {/* Desktop Dropdown Menu */}
+            {showLanguageMenu && (
+              <div className="hidden md:block absolute right-0 bottom-full mb-2 w-40 bg-card border border-border/50 rounded-lg shadow-lg z-50">
+                <button
+                  onClick={(e) => copyLink(e, poll.id, "es")}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-secondary rounded-t-lg transition-colors flex items-center gap-2"
+                >
+                  <span>🇪🇸</span>
+                  <span>Spanish</span>
+                </button>
+                <button
+                  onClick={(e) => copyLink(e, poll.id, "en")}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-secondary rounded-b-lg transition-colors flex items-center gap-2"
+                >
+                  <span>🇬🇧</span>
+                  <span>English</span>
+                </button>
+              </div>
+            )}
+
+            {/* Mobile Drawer */}
+            {showLanguageMenu && (
+              <>
+                <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setShowLanguageMenu(false)} />
+                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card rounded-t-2xl shadow-lg z-50 animate-in slide-in-from-bottom">
+                  <div className="p-4 border-b border-border/50">
+                    <div className="w-10 h-1 bg-secondary rounded-full mx-auto mb-4" />
+                    <h3 className="text-sm font-semibold">Select language</h3>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <button
+                      onClick={(e) => copyLink(e, poll.id, "es")}
+                      className="w-full px-4 py-3 text-sm font-medium bg-secondary hover:bg-secondary/80 rounded-lg transition-colors flex items-center gap-3"
+                    >
+                      <span className="text-lg">🇪🇸</span>
+                      <span>Spanish</span>
+                    </button>
+                    <button
+                      onClick={(e) => copyLink(e, poll.id, "en")}
+                      className="w-full px-4 py-3 text-sm font-medium bg-secondary hover:bg-secondary/80 rounded-lg transition-colors flex items-center gap-3"
+                    >
+                      <span className="text-lg">🇬🇧</span>
+                      <span>English</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={() => onViewStats(poll.id)}
             className="w-9 h-9 flex items-center justify-center rounded-lg bg-secondary hover:bg-secondary/80 transition-colors cursor-pointer"
