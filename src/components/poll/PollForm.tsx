@@ -224,7 +224,8 @@ export function PollForm({ poll }: PollFormProps) {
         ? "Hi! I just completed the survey and would like to get my 5% discount on my next order. Thank you!"
         : "¡Hola! Acabo de completar la encuesta y me gustaría obtener mi 5% de descuento en mi próximo pedido. ¡Gracias!",
     );
-    const whatsappNumber = "33622889947";
+    const whatsappNumber =
+      process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "1234567890";
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
     return (
