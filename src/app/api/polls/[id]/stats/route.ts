@@ -80,6 +80,7 @@ export async function GET(
         question: question.question,
         type: question.type,
         options: question.options ? JSON.parse(question.options) : undefined,
+        totalResponses: responses.length,
         responses: Object.entries(responseCounts)
           .map(([value, cnt]) => ({
             value: question.type === "rating" ? parseInt(value) : value,

@@ -9,22 +9,25 @@ function QuestionStatsCard({
   type,
   options,
   responses,
+  totalResponses,
 }: {
   question: string;
   type: QuestionType;
   options?: string[];
   responses: { value: string | number; count: number }[];
+  totalResponses: number;
 }) {
-  const totalResponses = responses.reduce((sum, r) => sum + r.count, 0);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (type === "rating") {
     const sortedResponses = [...responses].sort(
       (a, b) => Number(a.value) - Number(b.value),
     );
+    const answeredCount = responses.reduce((sum, r) => sum + r.count, 0);
     const average =
-      totalResponses > 0
+      answeredCount > 0
         ? responses.reduce((sum, r) => sum + Number(r.value) * r.count, 0) /
-          totalResponses
+          answeredCount
         : 0;
 
     return (
@@ -99,6 +102,8 @@ function QuestionStatsCard({
   }
 
   if (type === "text" || type === "email") {
+    const displayedResponses = isExpanded ? responses : responses.slice(0, 10);
+
     return (
       <div className="bg-card rounded-2xl p-5">
         <h3 className="font-semibold text-[15px] mb-4">{question}</h3>
@@ -106,7 +111,7 @@ function QuestionStatsCard({
           {responses.length === 0 ? (
             <p className="text-sm text-muted-foreground">No responses yet</p>
           ) : (
-            responses.slice(0, 10).map((response, index) => (
+            displayedResponses.map((response, index) => (
               <div key={index} className="text-sm p-3 bg-secondary rounded-xl">
                 <span>{String(response.value)}</span>
                 {response.count > 1 && (
@@ -118,9 +123,14 @@ function QuestionStatsCard({
             ))
           )}
           {responses.length > 10 && (
-            <p className="text-xs text-muted-foreground text-center pt-2">
-              +{responses.length - 10} more responses
-            </p>
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-xs text-muted-foreground hover:text-foreground text-center pt-2 w-full transition-colors cursor-pointer"
+            >
+              {isExpanded
+                ? "Show less"
+                : `+${responses.length - 10} more responses`}
+            </button>
           )}
         </div>
       </div>
@@ -137,6 +147,9 @@ interface StatsClientProps {
 export function StatsClient({ stats }: StatsClientProps) {
   const router = useRouter();
   const [isResetting, setIsResetting] = useState(false);
+  const [expandedResponses, setExpandedResponses] = useState<Set<string>>(
+    new Set()
+  );
 
   const statusConfig = {
     draft: {
@@ -157,6 +170,18 @@ export function StatsClient({ stats }: StatsClientProps) {
   };
 
   const config = statusConfig[stats.poll.status as keyof typeof statusConfig];
+
+  const toggleResponseExpanded = (responseId: string) => {
+    setExpandedResponses((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(responseId)) {
+        newSet.delete(responseId);
+      } else {
+        newSet.add(responseId);
+      }
+      return newSet;
+    });
+  };
 
   const handleRefresh = () => {
     router.refresh();
@@ -310,6 +335,7 @@ export function StatsClient({ stats }: StatsClientProps) {
                   type={qs.type}
                   options={qs.options}
                   responses={qs.responses}
+                  totalResponses={qs.totalResponses}
                 />
               ))}
             </div>
@@ -357,26 +383,33 @@ export function StatsClient({ stats }: StatsClientProps) {
               <div className="bg-card rounded-2xl overflow-hidden">
                 {/* Mobile view */}
                 <div className="sm:hidden">
-                  {stats.recentResponses.map((response, index) => (
-                    <div
-                      key={response.id}
-                      className="p-4 border-b border-border/50 last:border-b-0"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">
-                          #{index + 1}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(response.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {response.country || "Unknown"}
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {Object.entries(response.answers)
-                          .slice(0, 3)
-                          .map(([key, value]) => (
+                  {stats.recentResponses.map((response, index) => {
+                    const isExpanded = expandedResponses.has(
+                      String(response.id)
+                    );
+                    const answersArray = Object.entries(response.answers);
+                    const displayedAnswers = isExpanded
+                      ? answersArray
+                      : answersArray.slice(0, 3);
+
+                    return (
+                      <div
+                        key={response.id}
+                        className="p-4 border-b border-border/50 last:border-b-0"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">
+                            #{index + 1}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(response.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {response.country || "Unknown"}
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {displayedAnswers.map(([key, value]) => (
                             <span
                               key={key}
                               className="inline-block text-xs bg-secondary px-2 py-1 rounded-lg"
@@ -387,14 +420,22 @@ export function StatsClient({ stats }: StatsClientProps) {
                               {String(value).length > 20 && "..."}
                             </span>
                           ))}
-                        {Object.keys(response.answers).length > 3 && (
-                          <span className="text-xs text-muted-foreground">
-                            +{Object.keys(response.answers).length - 3} more
-                          </span>
-                        )}
+                          {answersArray.length > 3 && (
+                            <button
+                              onClick={() =>
+                                toggleResponseExpanded(String(response.id))
+                              }
+                              className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                            >
+                              {isExpanded
+                                ? "Show less"
+                                : `+${answersArray.length - 3} more`}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Desktop view */}
@@ -417,25 +458,32 @@ export function StatsClient({ stats }: StatsClientProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {stats.recentResponses.map((response, index) => (
-                        <tr
-                          key={response.id}
-                          className="border-b border-border/50 last:border-b-0"
-                        >
-                          <td className="px-5 py-3 text-muted-foreground">
-                            {index + 1}
-                          </td>
-                          <td className="px-5 py-3">
-                            {response.country || "Unknown"}
-                          </td>
-                          <td className="px-5 py-3 text-muted-foreground">
-                            {new Date(response.createdAt).toLocaleString()}
-                          </td>
-                          <td className="px-5 py-3">
-                            <div className="flex flex-wrap gap-1">
-                              {Object.entries(response.answers)
-                                .slice(0, 3)
-                                .map(([key, value]) => (
+                      {stats.recentResponses.map((response, index) => {
+                        const isExpanded = expandedResponses.has(
+                          String(response.id)
+                        );
+                        const answersArray = Object.entries(response.answers);
+                        const displayedAnswers = isExpanded
+                          ? answersArray
+                          : answersArray.slice(0, 3);
+
+                        return (
+                          <tr
+                            key={response.id}
+                            className="border-b border-border/50 last:border-b-0"
+                          >
+                            <td className="px-5 py-3 text-muted-foreground">
+                              {index + 1}
+                            </td>
+                            <td className="px-5 py-3">
+                              {response.country || "Unknown"}
+                            </td>
+                            <td className="px-5 py-3 text-muted-foreground">
+                              {new Date(response.createdAt).toLocaleString()}
+                            </td>
+                            <td className="px-5 py-3">
+                              <div className="flex flex-wrap gap-1">
+                                {displayedAnswers.map(([key, value]) => (
                                   <span
                                     key={key}
                                     className="inline-block text-xs bg-secondary px-2 py-1 rounded-lg"
@@ -446,16 +494,23 @@ export function StatsClient({ stats }: StatsClientProps) {
                                     {String(value).length > 20 && "..."}
                                   </span>
                                 ))}
-                              {Object.keys(response.answers).length > 3 && (
-                                <span className="text-xs text-muted-foreground">
-                                  +{Object.keys(response.answers).length - 3}{" "}
-                                  more
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                {answersArray.length > 3 && (
+                                  <button
+                                    onClick={() =>
+                                      toggleResponseExpanded(String(response.id))
+                                    }
+                                    className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                                  >
+                                    {isExpanded
+                                      ? "Show less"
+                                      : `+${answersArray.length - 3} more`}
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

@@ -81,6 +81,7 @@ export interface CustomPollStats {
     question: string;
     type: QuestionType;
     options?: string[];
+    totalResponses: number;
     responses: {
       value: string | number;
       count: number;

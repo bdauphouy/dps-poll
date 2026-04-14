@@ -139,6 +139,7 @@ export async function getPollStats(id: string): Promise<CustomPollStats | null> 
       question: question.question,
       type: question.type as QuestionType,
       options: question.options ? JSON.parse(question.options) : undefined,
+      totalResponses: responses.length,
       responses: Object.entries(responseCounts)
         .map(([value, cnt]) => ({
           value: question.type === "rating" ? parseInt(value) : value,
@@ -266,20 +267,53 @@ export async function updatePoll(
   }
 
   if (questions) {
-    await db.delete(pollQuestions).where(eq(pollQuestions.pollId, id));
+    // Get existing questions ordered by their order index
+    const existingQuestions = await db
+      .select()
+      .from(pollQuestions)
+      .where(eq(pollQuestions.pollId, id))
+      .orderBy(pollQuestions.orderIndex);
 
+    // Update or insert questions while preserving IDs
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      await db.insert(pollQuestions).values({
-        pollId: id,
-        type: q.type,
-        question: q.question,
-        questionEn: q.questionEn || null,
-        options: q.options?.length > 0 ? JSON.stringify(q.options) : null,
-        optionsEn: q.optionsEn?.length > 0 ? JSON.stringify(q.optionsEn) : null,
-        required: q.required ?? true,
-        orderIndex: i,
-      });
+      const existingQuestion = existingQuestions[i];
+
+      if (existingQuestion) {
+        // Update existing question to preserve its ID
+        await db
+          .update(pollQuestions)
+          .set({
+            type: q.type,
+            question: q.question,
+            questionEn: q.questionEn || null,
+            options: q.options?.length > 0 ? JSON.stringify(q.options) : null,
+            optionsEn: q.optionsEn?.length > 0 ? JSON.stringify(q.optionsEn) : null,
+            required: q.required ?? true,
+            orderIndex: i,
+          })
+          .where(eq(pollQuestions.id, existingQuestion.id));
+      } else {
+        // Insert new question
+        await db.insert(pollQuestions).values({
+          pollId: id,
+          type: q.type,
+          question: q.question,
+          questionEn: q.questionEn || null,
+          options: q.options?.length > 0 ? JSON.stringify(q.options) : null,
+          optionsEn: q.optionsEn?.length > 0 ? JSON.stringify(q.optionsEn) : null,
+          required: q.required ?? true,
+          orderIndex: i,
+        });
+      }
+    }
+
+    // Delete any extra questions that were removed
+    if (existingQuestions.length > questions.length) {
+      const questionsToDelete = existingQuestions.slice(questions.length);
+      for (const q of questionsToDelete) {
+        await db.delete(pollQuestions).where(eq(pollQuestions.id, q.id));
+      }
     }
   }
 
