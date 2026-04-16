@@ -148,7 +148,7 @@ export function StatsClient({ stats }: StatsClientProps) {
   const router = useRouter();
   const [isResetting, setIsResetting] = useState(false);
   const [expandedResponses, setExpandedResponses] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   const statusConfig = {
@@ -385,7 +385,7 @@ export function StatsClient({ stats }: StatsClientProps) {
                 <div className="sm:hidden">
                   {stats.recentResponses.map((response, index) => {
                     const isExpanded = expandedResponses.has(
-                      String(response.id)
+                      String(response.id),
                     );
                     const answersArray = Object.entries(response.answers);
                     const displayedAnswers = isExpanded
@@ -460,7 +460,7 @@ export function StatsClient({ stats }: StatsClientProps) {
                     <tbody>
                       {stats.recentResponses.map((response, index) => {
                         const isExpanded = expandedResponses.has(
-                          String(response.id)
+                          String(response.id),
                         );
                         const answersArray = Object.entries(response.answers);
                         const displayedAnswers = isExpanded
@@ -497,7 +497,9 @@ export function StatsClient({ stats }: StatsClientProps) {
                                 {answersArray.length > 3 && (
                                   <button
                                     onClick={() =>
-                                      toggleResponseExpanded(String(response.id))
+                                      toggleResponseExpanded(
+                                        String(response.id),
+                                      )
                                     }
                                     className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                                   >

@@ -665,7 +665,7 @@ export function PollBuilder({
                     <img
                       src={logoUrl}
                       alt=""
-                      className="w-32 h-32 object-contain"
+                      className="w-32 h-32 object-contain border border-border/30 rounded-full shadow-sm"
                     />
                   </div>
                 )}
@@ -1203,7 +1203,7 @@ export function PollBuilder({
                       <img
                         src={logoUrl}
                         alt=""
-                        className="w-32 h-32 object-contain"
+                        className="w-32 h-32 object-contain border border-border/30 rounded-full shadow-sm"
                       />
                     </div>
                   )}

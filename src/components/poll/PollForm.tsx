@@ -221,8 +221,8 @@ export function PollForm({ poll }: PollFormProps) {
   if (isSubmitted) {
     const whatsappMessage = encodeURIComponent(
       isEnglish
-        ? "Hi! I just completed the survey and would like to get my 5% discount on my next order. Thank you!"
-        : "¡Hola! Acabo de completar la encuesta y me gustaría obtener mi 5% de descuento en mi próximo pedido. ¡Gracias!",
+        ? "Hi! I just completed the survey and would like to get my 5% discount on my next shipment. Thank you!"
+        : "¡Hola! Acabo de completar la encuesta y me gustaría obtener mi 5% de descuento en mi próximo envío. ¡Gracias!",
     );
     const whatsappNumber =
       process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "1234567890";
@@ -380,7 +380,7 @@ export function PollForm({ poll }: PollFormProps) {
                 <img
                   src={poll.logoUrl}
                   alt=""
-                  className="w-40 h-40 object-contain"
+                  className="w-40 h-40 object-contain border border-border/30 rounded-full shadow-sm"
                 />
               </div>
             )}
